@@ -82,6 +82,7 @@ npm（全称 Node Package Manager）是 Node.js 的包管理工具，它是一�
 
 > package-lock.json 帮我们做了缓存，他会通过 name + version + integrity 信息生成一个唯一的key，这个key能找到对应的index-v5 下的缓存记录 也就是npm cache 文件夹（npm config list 或者 npm config ls -l 的 cache）下的
 > 如果发现有缓存记录，就会找到tar包的hash值，然后将对应的二进制文件解压到node_modeules
+
 ### npmrc
 
 npmrc 配置项
@@ -139,11 +140,11 @@ scripts-prepend-node-path=true
 * 如果还没找到就去环境变量查找
 * 再找不到就进行报错
 
-
 ### npm 可执行命令
+
 因为nodejs 是跨平台的所以可执行命令兼容各个平台
 
-.sh文件是给Linux unix Macos 使用
+.sh 是给Linux unix Macos 使用
 .cmd 给windows的cmd使用
 .ps1 给windows的powerShell 使用
 
@@ -154,6 +155,7 @@ scripts-prepend-node-path=true
 "dev": "node index.js",
 "postdev": "node post.js"
 ```
+
 执行 npm run dev 命令的时候 predev 会自动执行 他的生命周期是在dev之前执行，然后执行dev命令，再然后执行postdev，也就是dev之后执行
 
 运用场景例如npm run build 可以在打包之后删除dist目录等等
@@ -183,6 +185,7 @@ vue-cli 就用到了， [https://github.com/vuejs/vue-cli/blob/dev/package.json]
 ## npx
 
 npx是一个命令行工具，它是npm 5.2.0版本中新增的功能。它允许用户在不安装全局包的情况下，运行已安装在本地项目中的包或者远程仓库中的包。
+
 npx的作用是在命令行中运行node包中的可执行文件，而不需要全局安装这些包。这可以使开发人员更轻松地管理包的依赖关系，并且可以避免全局污染的问题。它还可以帮助开发人员在项目中使用不同版本的包，而不会出现版本冲突的问题。
 
 ### npx 的优势
