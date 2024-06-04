@@ -23,4 +23,17 @@
 
 // console.log(process.memoryUsage());
 
-console.log(process.env);
+// console.log(process.env);
+
+const {execSync, spawn} = require('child_process')
+// execSync("open Google Chrome http://www.baidu.com")
+
+const {stdout} = spawn('netstat',['-an'],{})
+
+//返回的数据用data事件接受
+stdout.on('data',(steram)=>{
+    console.log(steram.toString())
+})
+stdout.on('close',(steram)=>{
+    console.log('close')
+})
