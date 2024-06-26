@@ -173,3 +173,183 @@ index.html
 ```
 
 这样就从80代理到了3000端口 并且不存在跨域的问题了
+
+## 动静分离
+
+动静分离是一种在Web服务器架构中常用的优化技术，旨在提高网站的性能和可伸缩性。它基于一个简单的原则：将动态生成的内容（如动态网页、API请求）与静态资源（如HTML、CSS、JavaScript、图像文件）分开处理和分发。
+
+通过将动态内容和静态资源存储在不同的服务器或服务上，并使用不同的处理机制，可以提高网站的处理效率和响应速度。这种分离的好处包括：
+
+1. 性能优化：将静态资源与动态内容分离可以提高网站的加载速度。由于静态资源往往是不变的，可以使用缓存机制将其存储在CDN（内容分发网络）或浏览器缓存中，从而减少网络请求和数据传输的开销。
+2. 负载均衡：通过将动态请求分发到不同的服务器或服务上，可以平衡服务器的负载，提高整个系统的可伸缩性和容错性。
+3. 安全性：将动态请求与静态资源分开处理可以提高系统的安全性。静态资源通常是公开可访问的，而动态请求可能涉及敏感数据或需要特定的身份验证和授权。通过将静态资源与动态内容分离，可以更好地管理访问控制和安全策略。
+
+实现动静分离的方法
+
+* 使用反向代理服务器（如Nginx、Apache）将静态请求和动态请求转发到不同的后端服务器或服务。
+* 将静态资源部署到CDN上，通过CDN分发静态资源，减轻源服务器的负载。
+* 使用专门的静态文件服务器（如Amazon S3、Google Cloud Storage）存储和提供静态资源，而将动态请求交给应用服务器处理。
+
+代码编写
+下面是一个使用Node.js编写的示例代码，演示了如何处理动静分离的请求：
+
+```js
+import http from 'node:http' // 导入http模块
+import fs from 'node:fs' // 导入文件系统模块
+import path from 'node:path' // 导入路径处理模块
+import mime from 'mime' // 导入mime模块
+
+const server = http.createServer((req, res) => {
+    const { url, method } = req
+
+    // 处理静态资源
+    if (method === 'GET' && url.startsWith('/static')) {
+        const filePath = path.join(process.cwd(), url) // 获取文件路径
+        const mimeType = mime.getType(filePath) // 获取文件的MIME类型
+        console.log(mimeType) // 打印MIME类型
+
+        fs.readFile(filePath, (err, data) => { // 读取文件内容
+            if (err) {
+                res.writeHead(404, {
+                    "Content-Type": "text/plain" // 设置响应头为纯文本类型
+                })
+                res.end('not found') // 返回404 Not Found
+            } else {
+                res.writeHead(200, {
+                    "Content-Type": mimeType, // 设置响应头为对应的MIME类型
+                    "Cache-Control": "public, max-age=3600" // 设置缓存控制头
+                })
+                res.end(data) // 返回文件内容
+            }
+        })
+    }
+
+    // 处理动态资源
+    if ((method === 'GET' || method === 'POST') && url.startsWith('/api')) {
+        // ...处理动态资源的逻辑
+    }
+})
+
+server.listen(80) // 监听端口80
+```
+
+> 因为每个文件所对应的mime类型都不一样，如果手写的话有很多，不过强大的nodejs社区提供了mime库，可以帮我们通过后缀直接分析出 所对应的mime类型，然后我们通过强缓存让浏览器缓存静态资源
+
+### 常见的mime类型
+
+```txt
+-   文本文件：
+
+    -   text/plain：纯文本文件
+    -   text/html：HTML 文件
+    -   text/css：CSS 样式表文件
+    -   text/javascript：JavaScript 文件
+    -   application/json：JSON 数据
+
+-   图像文件：
+
+    -   image/jpeg：JPEG 图像
+    -   image/png：PNG 图像
+    -   image/gif：GIF 图像
+    -   image/svg+xml：SVG 图像
+
+-   音频文件：
+
+    -   audio/mpeg：MPEG 音频
+    -   audio/wav：WAV 音频
+    -   audio/midi：MIDI 音频
+
+-   视频文件：
+
+    -   video/mp4：MP4 视频
+    -   video/mpeg：MPEG 视频
+    -   video/quicktime：QuickTime 视频
+
+-   应用程序文件：
+
+    -   application/pdf：PDF 文件
+    -   application/zip：ZIP 压缩文件
+    -   application/x-www-form-urlencoded：表单提交数据
+    -   multipart/form-data：多部分表单数据
+```
+
+## 邮件服务
+
+邮件服务的功能：
+
+1. 任务分配与跟踪：邮件服务可以用于分配任务、指派工作和跟踪项目进展。通过邮件，可以发送任务清单、工作说明和进度更新，确保团队成员了解其责任和任务要求，并监控工作的完成情况。
+
+2. 错误报告和故障排除：当程序出现错误或异常时，程序员可以通过邮件将错误报告发送给团队成员或相关方。这样可以帮助团队了解问题的性质、复现步骤和相关环境，从而更好地进行故障排除和修复。邮件中可以提供详细的错误消息、堆栈跟踪和其他相关信息，以便其他团队成员能够更好地理解问题并提供解决方案。
+
+3. 自动化构建和持续集成：在持续集成和自动化构建过程中，邮件服务可以用于通知团队成员构建状态、单元测试结果和代码覆盖率等信息。如果构建失败或出现警告，系统可以自动发送邮件通知相关人员，以便及时采取相应措施。
+
+
+需要用到的第三方库
+
+```
+npm install js-yaml
+npm install nodemailer
+```
+
+我们邮件的账号（密码| 授权码）一般需要存放在yaml文件或者环境变量里面
+
+> js-yaml 用来解析yaml文件
+
+```yaml
+pass: 授权码 | 密码
+user: xxxxx@qq.com 邮箱账号
+```
+
+```js
+import nodemailder from 'nodemailer'
+import yaml from 'js-yaml'
+import fs from 'node:fs'
+import http from 'node:http'
+import url from 'node:url'
+const mailConfig = yaml.load(fs.readFileSync('./mail.yaml', 'utf8'))
+const transPort = nodemailder.createTransport({
+    service: "qq",
+    port: 587,
+    host: 'smtp.qq.com',
+    secure: true,
+    auth: {
+        pass: mailConfig.pass,
+        user: mailConfig.user
+    }
+})
+
+
+http.createServer((req, res) => {
+    const { pathname } = url.parse(req.url)
+    if (req.method === 'POST' && pathname == '/send/mail') {
+        let mailInfo = ''
+        req.on('data', (chunk) => {
+            mailInfo += chunk.toString()
+        })
+        req.on('end', () => {
+            const body = JSON.parse(mailInfo)
+            transPort.sendMail({
+                to: body.to,
+                from: mailConfig.user,
+                subject: body.subject,
+                text: body.text
+            })
+            res.end('ok')
+        })
+    }
+}).listen(3000)
+
+```
+
+nodemailder.createTransport 创建邮件服务这里用qq举例
+
+
+[QQ邮件服务文档 POP3/IMAP/SMTP 服务](https://wx.mail.qq.com/list/readtemplate?name=app_intro.html#/agreement/authorizationCode)
+
+POP3/SMTP 设置方法
+用户名/帐户：  你的QQ邮箱完整的地址
+密码：  生成的授权码
+电子邮件地址：  你的QQ邮箱的完整邮件地址
+接收邮件服务器：  pop.qq.com，使用SSL，端口号995
+发送邮件服务器：  smtp.qq.com，使用SSL，端口号465或587
+
