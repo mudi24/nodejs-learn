@@ -165,3 +165,183 @@ import loggerMiddleware from './middleware/logger.js';
 const app = express()
 app.use(loggerMiddleware)
 ```
+
+## 防盗链
+
+防盗链（Hotlinking）是指在网页或其他网络资源中，通过直接链接到其他网站上的图片、视频或其他媒体文件，从而显示在自己的网页上。这种行为通常会给被链接的网站带来额外的带宽消耗和资源浪费，而且可能侵犯了原始网站的版权。
+为了防止盗链，网站管理员可以采取一些措施：
+
+1. 通过HTTP引用检查：网站可以检查HTTP请求的来源，如果来源网址与合法的来源不匹配，就拒绝提供资源。这可以通过服务器配置文件或特定的脚本实现。
+2. 使用Referrer检查：网站可以检查HTTP请求中的Referrer字段，该字段指示了请求资源的来源页面。如果Referrer字段不符合预期，就拒绝提供资源。这种方法可以在服务器配置文件或脚本中实现。
+3. 使用访问控制列表（ACL）：网站管理员可以配置服务器的访问控制列表，只允许特定的域名或IP地址访问资源，其他来源的请求将被拒绝。
+4. 使用防盗链插件或脚本：一些网站平台和内容管理系统提供了专门的插件或脚本来防止盗链。这些工具可以根据需要配置，阻止来自未经授权的网站的盗链请求。
+5. 使用水印技术：在图片或视频上添加水印可以帮助识别盗链行为，并提醒用户资源的来源。
+
+
+初始化静态资源目录 express.static
+
+```js
+import express from 'express'
+
+const app = express()
+        //自定义前缀   初始化目录
+app.use('/assets',express.static('static'))
+
+
+app.listen(3000,()=>{
+    console.log('listening on port 3000')
+})
+```
+
+防盗链一般主要就是验证host 或者 referer
+
+```js
+import express from 'express';
+
+const app = express();
+
+const whitelist = ['localhost'];
+
+// 防止热链中间件
+const preventHotLinking = (req, res, next) => {
+  const referer = req.get('referer'); // 获取请求头部中的 referer 字段
+  if (referer) {
+    const { hostname } = new URL(referer); // 从 referer 中解析主机名
+    if (!whitelist.includes(hostname)) { // 检查主机名是否在白名单中
+      res.status(403).send('Forbidden'); // 如果不在白名单中，返回 403 Forbidden
+      return;
+    }
+  }
+  next(); // 如果在白名单中，继续处理下一个中间件或路由
+};
+
+app.use(preventHotLinking); // 应用防止热链中间件
+app.use('/assets', express.static('static')); // 处理静态资源请求
+
+app.listen(3000, () => {
+  console.log('Listening on port 3000'); // 启动服务器，监听端口3000
+});
+```
+
+## 响应头和请求头
+
+### 响应头
+
+```js
+Access-Control-Allow-Origin:*
+Cache-Control:public, max-age=0, must-revalidate
+Content-Type:text/html; charset=utf-8
+Server:nginx
+Date:Mon, 08 Jan 2024 18:32:47 GMT
+```
+响应头和跨域之间的关系
+
+cors
+
+跨域资源共享（Cross-Origin Resource Sharing，CORS）是一种机制，用于在浏览器中实现跨域请求访问资源的权限控制。当一个网页通过 XMLHttpRequest 或 Fetch API 发起跨域请求时，浏览器会根据同源策略（Same-Origin Policy）进行限制。同源策略要求请求的源（协议、域名和端口）必须与资源的源相同，否则请求会被浏览器拒绝
+
+浏览器的同源策略要求我们的协议、域名、端口号必须完全一致，否则就会请求就会被浏览器拒绝
+
+这个时候就需要后端支持一下，也是一个常见的处理跨域的办法：
+```js
+Access-Control-Allow-Origin: * | Origin
+```
+
+增加以下响应头 允许localhost 5500 访问
+
+```js
+app.use('*',(req,res,next)=>{
+    res.setHeader('Access-Control-Allow-Origin','http://localhost:5500') //允许localhost 5500 访问
+    next()
+})
+```
+
+## 请求头
+默认情况下cors仅支持客户端向服务器发送如下九个请求头
+
+> 没有application/json
+
+1. Accept：指定客户端能够处理的内容类型。
+2. Accept-Language：指定客户端偏好的自然语言。
+3. Content-Language：指定请求或响应实体的自然语言。
+4. Content-Type：指定请求或响应实体的媒体类型。
+5. DNT (Do Not Track)：指示客户端不希望被跟踪。
+6. Origin：指示请求的源（协议、域名和端口）。
+7. User-Agent：包含发起请求的用户代理的信息。
+8. Referer：指示当前请求的源 URL。
+9. Content-type: application/x-www-form-urlencoded | multipart/form-data |  text/plain
+
+如果客户端需要支持额外的请求那么我们需要在客户端支持
+
+```js
+'Access-Control-Allow-Headers','Content-Type' //支持application/json
+```
+
+请求方法支持
+我们服务端默认只支持 GET POST HEAD OPTIONS 请求
+
+例如我们遵循restFui 要支持PATCH 或者其他请求
+
+支持 patch 和 delete
+```js
+'Access-Control-Allow-Methods','POST,GET,OPTIONS,DELETE,PATCH'
+```
+
+### 预检请求 OPTIONS
+预检请求的主要目的是确保跨域请求的安全性 它需要满足一定条件才会触发
+
+1. 自定义请求方法：当使用非简单请求方法（Simple Request Methods）时，例如 PUT、DELETE、CONNECT、OPTIONS、TRACE、PATCH 等，浏览器会发送预检请求。
+2. 自定义请求头部字段：当请求包含自定义的头部字段时，浏览器会发送预检请求。自定义头部字段是指不属于简单请求头部字段列表的字段，例如 Content-Type 为 application/json、Authorization 等。
+3. 带凭证的请求：当请求需要在跨域环境下发送和接收凭证（例如包含 cookies、HTTP 认证等凭证信息）时，浏览器会发送预检请求。
+
+
+### 自定义响应头
+在我们做需求的时候肯定会碰到后端自定义响应头
+
+```js
+app.get('/info', (req, res) => {
+    res.set('xmzs', '1')
+    res.setHeader('Access-Control-Expose-Headers', 'xmzs')
+    res.json({
+        code: 200
+    })
+})
+```
+前端读取请求头
+```js
+ fetch('http://localhost:3000/info').then(res=>{
+    const headers = res.headers 
+    console.log(headers.get('xmzs')) //读取自定义响应头
+    return res.json()
+}).then(res=>{
+    console.log(res)
+})
+```
+
+### SSE 
+Server-Sent Events（SSE）是一种在客户端和服务器之间实现单向事件流的机制，允许服务器主动向客户端发送事件数据。在 SSE 中，可以使用自定义事件（Custom Events）来发送具有特定类型的事件数据。
+webSocket属于全双工通讯，也就是前端可以给后端实时发送，后端也可以给前端实时发送，SSE属于单工通讯，后端可以给前端实时发送
+
+express 增加该响应头text/event-stream就变成了sse，event 事件名称 data 发送的数据
+
+```js
+app.get('/sse',(req,res)=>{
+    res.setHeader('Content-Type', 'text/event-stream')
+    res.status(200)
+    setInterval(() => {
+        res.write('event: test\n')
+        res.write('data: ' + new Date().getTime() + '\n\n')
+    }, 1000)
+})
+```
+
+前端接受
+```js
+const sse = new EventSource('http://localhost:3000/sse')
+sse.addEventListener('test', (event) => {
+    console.log(event.data)
+})
+```
+
+
+
