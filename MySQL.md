@@ -61,11 +61,11 @@ CREATE TABLE `user` (
 ```
 create table 表名字 (
 
-id字段名称   int数据类型代表数字类型   NOT NULL(不能为空)  AUTO_INCREMENT(id自增)
-PRIMARY KEY(id为主键)
-name(字段名称) varchar(100)字符串类型100字符 COMMENT(注释)
-age(字段名称) int数据类型代表数字类型  COMMENT(注释)
-create_time(字段名称) timestamp(时间戳) DEFAULT CURRENT_TIMESTAMP(自动填充创建时间)
+  id字段名称   int数据类型代表数字类型   NOT NULL(不能为空)  AUTO_INCREMENT(id自增)
+  PRIMARY KEY(id为主键)
+  name(字段名称) varchar(100)字符串类型100字符 COMMENT(注释)
+  age(字段名称) int数据类型代表数字类型  COMMENT(注释)
+  create_time(字段名称) timestamp(时间戳) DEFAULT CURRENT_TIMESTAMP(自动填充创建时间)
 
 )
 
